@@ -1,0 +1,1 @@
+card 1: PCH [HDA Intel PCH], device 0: ALC255 Analog [ALC255 Analog]
