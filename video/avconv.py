@@ -5,14 +5,25 @@ from threading import Thread, Event, Semaphore
 import subprocess as sp
 import logging
 
+import platform
+if platform.system() == "Windows":
+    IS_WINDOWS = True
+    IS_LINUX = False
+else:
+    IS_WINDOWS = True
+    IS_LINUX = False
+
 class AVConverter (Thread):
-    CONVERTER_NAME  = 'avconv'
+    CONVERTER_NAME = 'avconv'
     pass
 
     def __init__(self, params, verbose=False):
         Thread.__init__(self)
         self.params = params
         self.verbose = verbose
+
+        if IS_WINDOWS:
+            self.CONVERTER_NAME = "C://ffmpeg//bin//ffmpeg"
 
         self.__subprocess = None
         self.__forced_stop = False
@@ -29,9 +40,17 @@ class AVConverter (Thread):
         try:
             self.__process_running = True
             if self.verbose:
-                self.__subprocess =  sp.Popen(cmd)
+                if IS_LINUX:
+                    self.__subprocess = sp.Popen(cmd)
+                else:
+                    self.__subprocess = sp.Popen(cmd, creationflags=sp.CREATE_NEW_PROCESS_GROUP)
             else:
-                self.__subprocess =  sp.Popen(cmd, stderr=sp.PIPE, stdout=sp.PIPE)
+                if IS_LINUX:
+                    self.__subprocess = sp.Popen(cmd, stderr=sp.PIPE,
+                                             stdout=sp.PIPE)
+                else:
+                    self.__subprocess = sp.Popen(cmd, stderr=sp.PIPE,
+                                             stdout=sp.PIPE, creationflags=sp.CREATE_NEW_PROCESS_GROUP)
         except:
             logging.exception("Error on starting Transcoding Process")
 
@@ -68,7 +87,10 @@ class AVConverter (Thread):
 
     def wait_finish(self):
         logging.debug("AVConverter.wait_finish()")
-        self.__avconv_finished.wait()
+        try:
+            self.__avconv_finished.wait()
+        except KeyboardInterrupt:
+            logging.debug("KeyBoard Interrupt)")
 
     def stop(self, waiting=False):
         logging.debug("AVConverter.stop()")
@@ -77,7 +99,13 @@ class AVConverter (Thread):
             import signal
             self.__forced_stop = True
             try:
-                self.__subprocess.send_signal(signal.SIGTERM)
+                if IS_WINDOWS:
+                    #import pywin32
+                    import os
+                    os.kill(self.__subprocess.pid, signal.CTRL_BREAK_EVENT)
+                    #pywin32.GenerateConsoleCtrlEvent(pywin32.CTRL_BREAK_EVENT, pgroupid)
+                else:
+                    self.__subprocess.send_signal(signal.SIGTERM)
                 #self._subprocess.wait()
             except:
                 logging.exception("Error killing the recording process")

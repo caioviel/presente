@@ -7,11 +7,21 @@ import datetime
 from datetime import datetime
 
 
+import platform
+if platform.system() == "Windows":
+    IS_WINDOWS = True
+    IS_LINUX = False
+else:
+    IS_WINDOWS = True
+    IS_LINUX = False
+
+
 class FormCapture(QtGui.QWidget):
     def __init__(self,  monitor_size=None, real_path=None, 
                  project_dir=None, username=None, parent=None):
         
         super(FormCapture, self).__init__(parent)
+        self.directory = None
         self.monitor_size = monitor_size
         self.real_path = real_path
         self.project_dir = project_dir
@@ -22,7 +32,7 @@ class FormCapture(QtGui.QWidget):
         self.init_ui()
         self.bind_events()
         self.create_project()
-        self.directory = None
+
         
         self.marks = []
         
@@ -36,13 +46,15 @@ class FormCapture(QtGui.QWidget):
             candidate_id = 'myProject' + str(candidate_index)
             
         self.directory = os.path.join(self.project_dir, candidate_id)
-        os.makedirs(self.directory)
+        #os.makedirs(self.directory)
         
-        files_path = os.path.join(os.path.split(self.real_path)[0], 'files')
-        print files_path
+        files_path = os.path.join(self.real_path, 'html5player')
         
-        #import shutil
-        #shutil.copytree(files_path, self.directory)
+        import shutil
+        shutil.copytree(files_path, self.directory)
+
+        os.makedirs( os.path.join(self.directory, "videos"))
+
 
         import model
         self.project = model.AnnotationProject(candidate_id, candidate_id, None, None, 
@@ -70,10 +82,10 @@ class FormCapture(QtGui.QWidget):
         
         self.ui.ckb_webcam.setChecked(True)
         self.video_devices = self.get_video_devices()
-        self.alsa_devices = self.get_alsa_devices()
+        self.audio_devices = self.get_audio_devices()
         self.ui.cmb_webcam_video.addItems(self.video_devices.keys())
-        self.ui.cmb_webcam_audio.addItems(self.alsa_devices.keys())
-        
+        self.ui.cmb_webcam_audio.addItems(self.audio_devices.keys())
+
         self.ui.ckb_screen.setChecked(True)
         self.ui.rdb_fullscreen.setChecked(True)
         self.ui.txt_height.setText(str(self.monitor_size.height()))
@@ -82,7 +94,7 @@ class FormCapture(QtGui.QWidget):
         self.ui.txt_y.setText("0")
         self.ui.cmb_screen_audio.addItem(u"Nenhum")
         self.ui.cmb_screen_audio.addItem(u"Pulse")
-        self.ui.cmb_screen_audio.addItems(self.alsa_devices.keys())
+        self.ui.cmb_screen_audio.addItems(self.audio_devices.keys())
         self.ui.txt_height.setEnabled(False)
         self.ui.txt_width.setEnabled(False)
         self.ui.txt_x.setEnabled(False)
@@ -178,41 +190,63 @@ class FormCapture(QtGui.QWidget):
     def start_recording_webcam(self):
         import video.avconv as avconv
         import cv2
-        
+
         device_path = self.video_devices[self.ui.cmb_webcam_video.currentText()]
-        device_number = int(device_path[10:])
+
+        if IS_LINUX:
+            device_number = int(device_path[10:])
+        else:
+            device_number = self.ui.cmb_webcam_video.currentIndex()
         print device_number
-        
+
         cap = cv2.VideoCapture(device_number)
         width = int(cap.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
         cap.release()
-        
+
         arg = ["-y"]
-        #Video
-        arg.append('-s')
-        arg.append(str(width) + "x" + str(height))
-        arg.append('-f')
-        arg.append('video4linux2')
-        arg.append('-i')
-        arg.append(device_path)
+        if IS_LINUX:
+            #Video
+            arg.append('-s')
+            arg.append(str(width) + "x" + str(height))
+            arg.append('-f')
+            arg.append('video4linux2')
+            arg.append('-i')
+            arg.append(device_path)
+
+            #Audio
+            arg.append('-f')
+            arg.append('alsa')
+            arg.append('-i')
+            arg.append(self.audio_devices[self.ui.cmb_webcam_audio.currentText()])
+
+
+            #Codec
+            arg.append('-c:a')
+            arg.append('libvo_aacenc')
+            arg.append('-c:v')
+            arg.append('libx264')
+            arg.append('-qscale')
+            arg.append('0.1')
+        else:
+            #Video
+            #arg.append('-s')
+            #arg.append(str(width) + "x" + str(height))
+            arg.append('-f')
+            arg.append('dshow')
+            arg.append('-i')
+            #arg.append("video=\"" + device_path + "\":audio=\"" + self.audio_devices[self.ui.cmb_webcam_audio.currentText()] + "\"")
+            arg.append("video=" + device_path + ":audio=" + self.audio_devices[self.ui.cmb_webcam_audio.currentText()])
+
+            #Codec
+            arg.append('-c:a')
+            arg.append('libvo_aacenc')
+            arg.append('-c:v')
+            arg.append('libx264')
+            arg.append('-qscale')
+            arg.append('0.1')
         
-        #Audio
-        arg.append('-f')
-        arg.append('alsa')
-        arg.append('-i')
-        arg.append(self.alsa_devices[self.ui.cmb_webcam_audio.currentText()])
-        
-        
-        #Codec
-        arg.append('-c:a')
-        arg.append('libvo_aacenc')
-        arg.append('-c:v')
-        arg.append('libx264')
-        arg.append('-qscale')
-        arg.append('0.1')
-        
-        self.cam_file = os.path.join(self.directory, "medias", "webcam.mp4")
+        self.cam_file = os.path.join(self.directory, "videos", "webcam.mp4")
         arg.append(self.cam_file)
         
         self.camrec = avconv.AVConverter(arg, True)
@@ -222,35 +256,53 @@ class FormCapture(QtGui.QWidget):
         import video.avconv as avconv
         
         arg = ["-y"]
-        
-        #Video
-        arg.append('-f')
-        arg.append('x11grab')
-        arg.append('-s')
-        arg.append(str(self.ui.txt_width.text()) + "x" + str(self.ui.txt_height.text()))
-        arg.append("-draw_mouse")
-        arg.append("1")
-        if self.ui.rdb_partial.isChecked():
-            arg.append("-show_region")
-            arg.append("1")
-        arg.append('-i')
-        arg.append(":0.0+" + str(self.ui.txt_x.text()) + "," + str(self.ui.txt_y.text())  )
-        
 
-            
-        #Audio
-        audio = self.ui.cmb_screen_audio.currentText()
-        if audio != "Nenhum":
-            if audio == "Pulse":
-                arg.append("-f")
-                arg.append("pulse")
-                arg.append("-i")
-                arg.append("default")
-            else:
-                arg.append('-f')
-                arg.append('alsa')
-                arg.append('-i')
-                arg.append(self.alsa_devices[self.ui.cmb_webcam_audio.currentText()])
+        if IS_LINUX:
+            #Video
+            arg.append('-f')
+            arg.append('x11grab')
+            arg.append('-s')
+            arg.append(str(self.ui.txt_width.text()) + "x" + str(self.ui.txt_height.text()))
+            arg.append("-draw_mouse")
+            arg.append("1")
+            if self.ui.rdb_partial.isChecked():
+                arg.append("-show_region")
+                arg.append("1")
+            arg.append('-i')
+            arg.append(":0.0+" + str(self.ui.txt_x.text()) + "," + str(self.ui.txt_y.text())  )
+
+            #Audio
+            audio = self.ui.cmb_screen_audio.currentText()
+            if audio != "Nenhum":
+                if audio == "Pulse":
+                    arg.append("-f")
+                    arg.append("pulse")
+                    arg.append("-i")
+                    arg.append("default")
+                else:
+                    arg.append('-f')
+                    arg.append('alsa')
+                    arg.append('-i')
+                    arg.append(self.audio_devices[self.ui.cmb_webcam_audio.currentText()])
+        else:
+            #Video
+            arg.append('-f')
+            arg.append('gdigrab')
+            arg.append('-framerate')
+            arg.append("25")
+            arg.append('-video_size')
+            arg.append(str(self.ui.txt_width.text()) + "x" + str(self.ui.txt_height.text()))
+            arg.append("-draw_mouse")
+            arg.append("1")
+            if self.ui.rdb_partial.isChecked():
+                arg.append("-show_region")
+                arg.append("1")
+                arg.append("-offset_x")
+                arg.append(str(self.ui.txt_x.text()))
+                arg.append("-offset_y")
+                arg.append(str(self.ui.txt_y.text()))
+            arg.append('-i')
+            arg.append('desktop')
         
         
         #Codec
@@ -264,14 +316,16 @@ class FormCapture(QtGui.QWidget):
         arg.append('mp4')
         
         
-        self.screen_file = os.path.join(self.directory, "medias", "screen.mp4")
+        self.screen_file = os.path.join(self.directory, "videos", "screen.mp4")
         arg.append(self.screen_file)
         
         self.screenrec = avconv.AVConverter(arg, True)
         self.screenrec.start()
-    
-    
+
     def stop_recording(self):
+        import time
+        time.sleep(5)
+
         if self.ui.ckb_webcam.isChecked():
             self.camrec.stop()
             
@@ -287,6 +341,21 @@ class FormCapture(QtGui.QWidget):
         
         self.ui.btn_save.setEnabled(True)
         self.ui.btn_drop.setEnabled(True)
+
+
+        msgBox = QtGui.QMessageBox()
+        msgBox.setText(u"Gravação encerrada.")
+        msgBox.setInformativeText(u"Deseja visualizar o resoltado?")
+        msgBox.setStandardButtons(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+        msgBox.setDefaultButton(QtGui.QMessageBox.Yes)
+        ret = msgBox.exec_()
+
+        if ret == QtGui.QMessageBox.Yes:
+            self.open_broser()
+
+    def open_broser(self):
+        import webbrowser
+        webbrowser.open(os.path.join(self.directory, "index.html"), new=1, autoraise=True)
         
         
     def mark_important(self):
@@ -363,40 +432,75 @@ class FormCapture(QtGui.QWidget):
         
     def get_video_devices(self):
         video_devices = {}
-        f = os.popen("v4l2-ctl --list-devices")
-        line = f.readline()
-        while line != "":
-            if "(" in line:
-                device_name = line[: line.find("(")-1]
-                print device_name
-                line = f.readline()
-                while line != "" and "(" not in line:
-                    if "/" in line:
-                        device_path = line[line.find("/"): len(line)-1]
-                        print device_path
-                        video_devices[device_name] = device_path
-                    line = f.readline()
-                continue
-            
+        if IS_LINUX:
+            f = os.popen("v4l2-ctl --list-devices")
             line = f.readline()
+            while line != "":
+                if "(" in line:
+                    device_name = line[: line.find("(")-1]
+                    print device_name
+                    line = f.readline()
+                    while line != "" and "(" not in line:
+                        if "/" in line:
+                            device_path = line[line.find("/"): len(line)-1]
+                            print device_path
+                            video_devices[device_name] = device_path
+                        line = f.readline()
+                    continue
+
+                line = f.readline()
+        else:
+            from subprocess import Popen, PIPE, STDOUT
+            sub = Popen("c:\\ffmpeg\\bin\\ffmpeg  -list_devices true -f dshow -i dummy", stdout=PIPE, stdin=PIPE, stderr=STDOUT,shell=True)
+            while sub.poll() is None:
+                line = sub.stdout.readline()
+                line_lower = line.lower()
+                has = False
+                for name in ["webcam", "camera", "cam", u"câmera", u"câmara"]:
+                    if name in line_lower:
+                        has = True
+                        break
+
+                if has:
+                    device_name = line[line.find('\"')+1 : line.rfind('\"')]
+                    print device_name
+                    video_devices[device_name] = device_name
             
         return video_devices
     
-    def get_alsa_devices(self):
-        f = os.popen("arecord -l")
-        
-        alsa_devices = {}
-        
-        line = f.readline()
-        while line != "":
-            if "card" in line:
-                card_number = line[line.find("card ") + 5 : line.find(":")]
-                device_number = line[line.find("device ") + 7: line.rfind(":")]
-                device_name = line[line.find("[") +1: line.find("]")]
-                alsa_devices[device_name] = "hw:" + card_number + "," + device_number
+    def get_audio_devices(self):
+        audio_devices = {}
+
+        if IS_LINUX:
+            f = os.popen("arecord -l")
 
             line = f.readline()
-        return alsa_devices
+            while line != "":
+                if "card" in line:
+                    card_number = line[line.find("card ") + 5 : line.find(":")]
+                    device_number = line[line.find("device ") + 7: line.rfind(":")]
+                    device_name = line[line.find("[") +1: line.find("]")]
+                    audio_devices[device_name] = "hw:" + card_number + "," + device_number
+
+                line = f.readline()
+        else:
+            from subprocess import Popen, PIPE, STDOUT
+            sub = Popen("c:\\ffmpeg\\bin\\ffmpeg  -list_devices true -f dshow -i dummy", stdout=PIPE, stdin=PIPE, stderr=STDOUT,shell=True)
+            while sub.poll() is None:
+                line = sub.stdout.readline()
+                line_lower = line.lower()
+                has = False
+                for name in ["microfone", "microphone", "mic"]:
+                    if name in line_lower:
+                        has = True
+                        break
+
+                if has:
+                    device_name = line[line.find('\"')+1 : line.rfind('\"')]
+                    print device_name
+                    audio_devices[device_name] = device_name
+
+        return audio_devices
         
         
                 

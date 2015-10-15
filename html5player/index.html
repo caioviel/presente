@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<meta charset="utf-8" /> 
+<html>
+<head>
+	<title>PresentePlayer</title>
+
+	<script type="text/javascript" src="js/jquery.js"></script>
+	<script type="text/javascript" src="js/preloadjs-0.6.1.combined.js"></script>
+	<script type="text/javascript" src="js/PresentePlayer.js"></script>
+
+
+	<link rel="stylesheet" type="text/css" href="css/presentePlayer.css"></link>
+</head>
+<body>
+<div id="mainPlayer" class="presentePlayer">
+
+	<div id="videoContainer" class="videoContainer">
+		<video id="videoScreen" class="biggerVideo" onclick="changeBiggerVideo('screen')" src="videos/screen.mp4">
+		</video>
+
+		<video id="videoWebcam" class="lesserVideo" onclick="changeBiggerVideo('webcam')" src="videos/webcam.mp4">
+		</video>
+	</div>
+
+	<div id='media-controls' class="controls">
+			<button id='play-pause-button' class='play' title='play' onclick='togglePlayPause();'>Play</button>
+			<!--button id='replay-button' class='replay' title='replay' onclick='replayMedia();'>Replay</button-->	
+			<canvas id='progress-bar' class="progress" >canvas not supported</canvas>
+			<!--button id='stop-button' class='stop' title='stop' onclick='stopPlayer();'>Stop</button>
+			<button id='volume-inc-button' class='volume-plus' title='increase volume' onclick='changeVolume("+");'>Increase volume</button>
+			<button id='volume-dec-button' class='volume-minus' title='decrease volume' onclick='changeVolume("-");'>Decrease volume</button>
+			<button id='mute-button' class='mute' title='mute' onclick='toggleMute("true");'>Mute</button-->	
+	</div>
+</div>
+
+<script type="text/javascript">
+
+</script>
+
+</body>
+</html>

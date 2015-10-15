@@ -4,7 +4,7 @@
 import sys
 import json
 import os
-from PyQt4 import QtGui, QtCore
+from PySide import QtGui, QtCore
 #from PySide import QtCore
 
 

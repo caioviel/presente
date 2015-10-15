@@ -1,10 +1,8 @@
-import video.avconv as avconv
-import time
+__author__ = 'Caio'
 
 
-def getLinuxCap():
-        cap = avconv.AVConverter(["-y",
-                              "-rtbufsize",  "1500M",
+def main():
+    cap = avconv.AVConverter(["-y",
                               "-f",
                               "x11grab",
                               "-s",
@@ -26,26 +24,10 @@ def getLinuxCap():
                               "-qscale",
                               "0.1",
                               "/home/caioviel/Desktop/capturedfile.mp4"], True)
-        return cap
 
-def getWindowsCap():
-        cap = avconv.AVConverter(["-y",
-                              "-f",
-                              "gdigrab",
-                              "-framerate",
 
-                              "25",
-                              "-i",
-                              "desktop",
-                              "C://Users//Caio/Desktop//teste.mp4"], True)
-        return cap
-
-def main():
-    cap = getWindowsCap()
-    
-    
     cap.start()
-    time.sleep(10)
+    time.sleep(15)
     cap.stop(True)
 
 

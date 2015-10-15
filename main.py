@@ -10,6 +10,15 @@ import sys
 import getpass
 import logging
 
+
+import platform
+if platform.system() == "Windows":
+    IS_WINDOWS = True
+    IS_LINUX = False
+else:
+    IS_WINDOWS = True
+    IS_LINUX = False
+
 logger = logging.getLogger('presente')
 logger.setLevel(logging.DEBUG)
 handler = logging.StreamHandler()
@@ -37,7 +46,7 @@ if __name__ == "__main__":
     project_dir = create_project_directory()
       
     app = QtGui.QApplication(sys.argv)
-    widget = FormCapture(app.desktop().screenGeometry(), 
+    widget = FormCapture(app.desktop().screenGeometry(),
                          real_path, 
                          project_dir,
                          username)
