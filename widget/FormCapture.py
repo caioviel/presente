@@ -452,7 +452,7 @@ class FormCapture(QtGui.QWidget):
                 line = f.readline()
         else:
             from subprocess import Popen, PIPE, STDOUT
-            sub = Popen("c:\\ffmpeg\\bin\\ffmpeg  -list_devices true -f dshow -i dummy", stdout=PIPE, stdin=PIPE, stderr=STDOUT,shell=True)
+            sub = Popen("c:\\presente\\ffmpeg  -list_devices true -f dshow -i dummy", stdout=PIPE, stdin=PIPE, stderr=STDOUT,shell=True)
             while sub.poll() is None:
                 line = sub.stdout.readline()
                 line_lower = line.lower()
@@ -486,7 +486,7 @@ class FormCapture(QtGui.QWidget):
                 line = f.readline()
         else:
             from subprocess import Popen, PIPE, STDOUT
-            sub = Popen("c:\\ffmpeg\\bin\\ffmpeg  -list_devices true -f dshow -i dummy", stdout=PIPE, stdin=PIPE, stderr=STDOUT,shell=True)
+            sub = Popen("c:\\presente\\ffmpegg  -list_devices true -f dshow -i dummy", stdout=PIPE, stdin=PIPE, stderr=STDOUT,shell=True)
             while sub.poll() is None:
                 line = sub.stdout.readline()
                 line_lower = line.lower()

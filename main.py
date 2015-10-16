@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-PROJECTS_DIRECTORY = "MyPresenteCapture"
-
 from PySide import QtGui
 from widget.FormCapture import FormCapture
 import os
@@ -18,6 +16,9 @@ if platform.system() == "Windows":
 else:
     IS_WINDOWS = True
     IS_LINUX = False
+
+
+PROJECTS_DIRECTORY = "c:\\"
 
 logger = logging.getLogger('presente')
 logger.setLevel(logging.DEBUG)
