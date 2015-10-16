@@ -18,7 +18,7 @@ else:
     IS_LINUX = False
 
 
-PROJECTS_DIRECTORY = "c:\\"
+PROJECTS_DIRECTORY = "MyPresenteCaptures"
 
 logger = logging.getLogger('presente')
 logger.setLevel(logging.DEBUG)
@@ -27,7 +27,10 @@ handler.setFormatter(logging.Formatter('%(levelname)s - %(name)s: %(message)s'))
 logger.addHandler(handler)
 
 real_path, _ = os.path.split(os.path.realpath(__file__))
-home_directory = os.getenv('USERPROFILE') or os.getenv('HOME')
+if IS_LINUX:
+    home_directory = os.getenv('USERPROFILE') or os.getenv('HOME')
+else:
+    home_directory = "C:\\"
 username = getpass.getuser()
 
 
