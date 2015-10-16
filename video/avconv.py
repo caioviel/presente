@@ -3,6 +3,7 @@ __author__ = 'caioviel'
 
 from threading import Thread, Event, Semaphore
 import subprocess as sp
+import os
 import logging
 
 import platform
@@ -15,7 +16,7 @@ else:
 
 class AVConverter (Thread):
     CONVERTER_NAME = 'avconv'
-    pass
+    FFMPEG_PATH = os.path.split(os.path.split(os.path.realpath(__file__))[0])[0]
 
     def __init__(self, params, verbose=False):
         Thread.__init__(self)
@@ -23,7 +24,7 @@ class AVConverter (Thread):
         self.verbose = verbose
 
         if IS_WINDOWS:
-            self.CONVERTER_NAME = "C://ffmpeg//bin//ffmpeg"
+            self.CONVERTER_NAME = os.path.join(self.FFMPEG_PATH, "ffmpeg")
 
         self.__subprocess = None
         self.__forced_stop = False

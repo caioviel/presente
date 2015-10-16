@@ -106,6 +106,7 @@ class FormCapture(QtGui.QWidget):
         self.ui.btn_other.setEnabled(False)
         self.ui.btn_save.setEnabled(False)
         self.ui.btn_stop.setEnabled(False)
+        self.ui.btn_save.setVisible(False)
         
     def ckb_webcam_changed(self, state):
         if self.ui.ckb_webcam.isChecked():
@@ -345,7 +346,7 @@ class FormCapture(QtGui.QWidget):
 
         msgBox = QtGui.QMessageBox()
         msgBox.setText(u"Gravação encerrada.")
-        msgBox.setInformativeText(u"Deseja visualizar o resoltado?")
+        msgBox.setInformativeText(u"Deseja visualizar o resultado?")
         msgBox.setStandardButtons(QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
         msgBox.setDefaultButton(QtGui.QMessageBox.Yes)
         ret = msgBox.exec_()
@@ -490,7 +491,7 @@ class FormCapture(QtGui.QWidget):
                 line = sub.stdout.readline()
                 line_lower = line.lower()
                 has = False
-                for name in ["microfone", "microphone", "mic"]:
+                for name in ["microfone", "microphone", "mic", "fone", "phone", "headset"]:
                     if name in line_lower:
                         has = True
                         break
