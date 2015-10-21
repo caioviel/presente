@@ -1,4 +1,5 @@
 import cv2.cv as cv
+import cv2
 
 class ImageMatcher():
     def __init__(self, num):
@@ -53,9 +54,8 @@ class TransitionDetector():
         
     def frame_to_time(self, frame):
         return frame / self._fps
-        
-        
-    def detect_transitions(self, filename):
+
+    def detect_transitions(self, filename, imagepath):
         
         capturer = cv.CaptureFromFile(filename)
         self._fps = cv.GetCaptureProperty(capturer , cv.CV_CAP_PROP_FPS)
@@ -87,7 +87,12 @@ class TransitionDetector():
         begin_poi_frame = 0
         last_transition_frame = 0 #Use this number to assure the first transition
         frame_mininum_spacing = self._fps * self.minimun_spacing
+
         points_of_interest = []
+        capturer = cv.CaptureFromFile(filename)
+        frameIndex = 0
+        img = None
+        poiIndex = 0
         for current_frame, similarity in transitions_detected:
             #This frame is spaced enough to figure as a point of interest
             #logger.info('current_frame: %s, last_transition_frame: %s, frame_mininum_spacing: %s', \
@@ -100,10 +105,21 @@ class TransitionDetector():
                 #             end_time, begin_time, self.minimun_duration)
                 
                 if end_time - begin_time >= self.minimun_duration:
-                    poi = (begin_time, end_time)
+                    myname = "slide_transition_" + str(poiIndex) + ".png"
+                    while frameIndex < begin_poi_frame + 5:
+                        import os
+                        img = cv.QueryFrame(capturer)
+                        frameIndex += 1
+                        if img is None:
+                            break
+                    print "Generating image: ", myname
+                    cv.SaveImage(os.path.join(imagepath, myname), img)
+
+                    poi = (begin_time, end_time, myname)
                     #logger.info('Adding Poi')
                     points_of_interest.append(poi)
                     begin_poi_frame = current_frame
+                    poiIndex += 1
             else:
                 pass
             last_transition_frame = current_frame
@@ -111,11 +127,24 @@ class TransitionDetector():
         #For last frame
         end_time = self.frame_to_time(last_transition_frame)
         begin_time = self.frame_to_time(begin_poi_frame)
+
         if end_time - begin_time >= self.minimun_duration:
+            myname = "slide_transition_" + str(poiIndex) + ".png"
+            while frameIndex < begin_poi_frame + 2:
+                import os
+                img = cv.QueryFrame(capturer)
+                frameIndex += 1
+                if img is None:
+                    break
+            print "Generating image: ", frameIndex
+            cv.SaveImage(os.path.join(imagepath, myname), img)
+
             poi = (self.frame_to_time(begin_poi_frame), \
-                   self.frame_to_time(last_transition_frame))
+                   self.frame_to_time(last_transition_frame), \
+                   myname)
             points_of_interest.append(poi)
-        return points_of_interest
+
+        return nFrames/self._fps, points_of_interest
     
 def main():
     detector = TransitionDetector()

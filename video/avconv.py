@@ -11,8 +11,8 @@ if platform.system() == "Windows":
     IS_WINDOWS = True
     IS_LINUX = False
 else:
-    IS_WINDOWS = True
-    IS_LINUX = False
+    IS_WINDOWS = False
+    IS_LINUX = True
 
 class AVConverter (Thread):
     CONVERTER_NAME = 'avconv'
