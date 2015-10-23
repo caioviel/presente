@@ -14,7 +14,6 @@ function initialiseMediaPlayer() {
 	videoScreen.jquery = $("#videoScreen");
 	videoWebcam = $("#videoWebcam")[0];
 	videoWebcam.jquery = $("#videoWebcam");
-	console.log(videoScreen, videoWebcam);
 
 	
 	// Get handles to each of the buttons and required elements
@@ -23,6 +22,7 @@ function initialiseMediaPlayer() {
 	progressBar = $("#progress-bar")[0];
 	progressBar.width = progressBar.clientWidth;
 	progressBar.height = progressBar.clientHeight;
+	videoWebcam.currentTime = 2;
 
 	progressBar.addEventListener("click", function(e) {
 	    var canvas = document.getElementById('progress-bar');
@@ -31,7 +31,7 @@ function initialiseMediaPlayer() {
 	        e = window.event;
 	    } //get the latest windows event if it isn't set
 	    videoScreen.currentTime = videoScreen.duration * (e.offsetX / canvas.clientWidth);
-	    videoWebcam.currentTime = videoWebcam.duration * (e.offsetX / canvas.clientWidth);
+	    videoWebcam.currentTime = 2 + videoWebcam.duration * (e.offsetX / canvas.clientWidth);
 
 	}, true);
 
@@ -58,12 +58,51 @@ function initialiseMediaPlayer() {
 		// Update the button to be mute/unmute
 		if (videoScreen.muted) changeButtonType(muteBtn, 'unmute');
 		else changeButtonType(muteBtn, 'mute');
-	}, false);	
+	}, false);
+
+	loadPois(captureSession["pointsOfInterest"]);
+	updateProgressBar();
+}
+
+function loadPois(pois) {
+	var poisDiv = $("#navigationContainer");
+
+	for (i = 0; i < pois.length; i++) {
+		var newDiv = createPoiDiv(pois[i], i);
+		poisDiv.append(newDiv);
+
+		newDiv[0].poiTime = pois[i]["begin"];
+		newDiv[0].addEventListener("click", function(e) {
+	    	videoScreen.currentTime = this.poiTime
+	    	videoWebcam.currentTime = this.poiTime +2
+
+			if (videoScreen.paused || videoScreen.ended) {
+				// Change the button to be a pause button
+				changeButtonType(playPauseBtn, 'pause');
+				// Play the media
+				videoScreen.play();
+				videoWebcam.play();
+			}
+		}, true);
+
+		if (i == 0) {
+			newDiv.focus();
+		}
+	}
+}
+
+function createPoiDiv(poi, index) {
+	var newdiv1 = $( "<div id='poi_" + poi["type"] + "_" + index.toString() + "' class='poiContainer'></div>" );
+	newdiv1.append( $("<spam>Transição de Slide: " + fromSecondsToTimeString(poi["begin"], false) + "</spam>"))
+	newdiv1.append( $("<img src='images/" + poi["slideImage"] + "'></img>)") );
+	return newdiv1;
+
 }
 
 function updateProgressBar() {
     //get current time in seconds
     var elapsedTime = videoScreen.currentTime;
+
     //update the progress bar
     if (progressBar.getContext) {
         var ctx = progressBar.getContext("2d");
@@ -77,7 +116,51 @@ function updateProgressBar() {
         if (fWidth > 0) {
             ctx.fillRect(0, 0, fWidth,  progressBar.clientHeight);
         }
+
+        var fontSize = 20;
+        ctx.font= fontSize + "px Verdana";
+		ctx.fillStyle = "white";
+		var text = getTimeString(elapsedTime, captureSession["duration"])
+		ctx.fillText(text, progressBar.width - 10 - ctx.measureText(text).width, fontSize + (progressBar.height - fontSize)/2);
     }
+}
+
+function getTimeString(current, total) {
+	var currentStr, totalStr;
+	if (total >= 3600) {
+		currentStr = fromSecondsToTimeString(current, true);
+		totalStr = fromSecondsToTimeString(total, true);
+	} else {
+		currentStr = fromSecondsToTimeString(current, false);
+		totalStr = fromSecondsToTimeString(total, false);
+	}
+
+	return currentStr + " / " + totalStr;
+}
+
+function fromSecondsToTimeString(totalSec, useHours) {
+	var h, m, s, time = "";
+	m = Math.floor(totalSec/60);
+	s = Math.floor(totalSec%60);
+	h = Math.floor(m/60);
+	m = m%60;
+
+	if (useHours) {
+		time += h.toString() + ":";
+
+		if (m < 10)
+			time += "0"
+	}
+
+	time += m.toString() + ":"
+
+	if (s < 10)
+		time += "0";
+
+	time += s.toString()
+
+	return time;
+
 }
 
 function togglePlayPause() {
@@ -105,7 +188,7 @@ function stopPlayer() {
 	videoScreen.currentTime = 0;
 
 	videoWebcam.pause();
-	videoWebcam.currentTime = 0;
+	videoWebcam.currentTime = 2;
 }
 
 // Changes the volume on the media player

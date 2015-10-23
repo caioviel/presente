@@ -7,7 +7,7 @@
 
 .presentePlayer {
 	position: absolute;
-	width: 1280px;
+	width: 1500px;
 	height: 762px;
 	background-color: #333;
 }
@@ -20,6 +20,38 @@
 	position: absolute;
 }
 
+.navigationContainer {
+	top: 0px;
+	left: 1280px;
+	width: 220px;
+	height: 762px;
+	position: absolute;
+	background-color: #333;
+	z-index: 2;
+	overflow: auto;
+}
+
+.poiContainer {	
+	z-index: 3;
+	margin: 5px 5px;
+	background-color: #555;
+	border: 2px solid white;
+	cursor: pointer;
+	color: white;
+	text-align: center;
+}
+
+.poiContainer img{
+	max-width: 100%; 
+    height: auto; 
+}
+
+.poiContainer:focus {
+	/*background-color: #FF7D00;*/
+	background-color: yellow;
+	border: 4px solid white;
+}
+
 .controls {
 	position: absolute;
 	width: 1280px;
@@ -27,6 +59,8 @@
 	bottom: 0px; 
 	z-index: 2;
 	background-color: #333;
+	font-family: Nobile;
+	font-size: 20px;
 }
 
 button {
@@ -71,20 +105,20 @@ button {
 
 .lesserVideo {
 	position: absolute;
-	width: 25%;
-	height: 25%;
-	bottom: 40px; 
-	right: 40px;
+	width: 20%;
+	height: 20%;
+	bottom: 0px; 
+	right: 0px;
 	z-index: 1;
 	background-color: #000000;
 }
 
 .lesserVideo:hover {
-	position: absolute;
-	width: 25%;
-	height: 25%;
-	bottom: 40px; 
-	right: 40px;
-	z-index: 1;
 	background-color: #000000;
+}
+
+
+@font-face {
+    font-family: 'Nobile';
+    src: url("font/Nobile-Regular.ttf")
 }
